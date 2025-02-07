@@ -1,0 +1,7 @@
+Checking, 234
+Checking,234
+Checking,45
+Checking,234
+Checking,234
+Checking,45
+Savings,2

@@ -1,18 +1,24 @@
 package BankingSystem;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Bank {
 
-    private int numAccounts;
-    private Account accounts[];
+    private  ArrayList<Account> accounts;
     private Scanner keyboard;
 
 
     public Bank(){
-        numAccounts =0;
-        accounts = new Account[10];
+        
+        accounts = new ArrayList<>();
         keyboard= new Scanner(System.in);
+        loadAccountNumbersFromFile();
     }
 
     public void start(){
@@ -21,20 +27,64 @@ public class Bank {
             choice = menu(keyboard);
 
             if (choice == 1) {
-                accounts[numAccounts++] = createAccount(keyboard);
+                accounts.add(createAccount(keyboard));
             } else if (choice == 2) {
-                doDeposit(accounts, numAccounts, keyboard);
+                doDeposit(accounts, keyboard);
 
             } else if (choice == 3) {
-                doWithdraw(accounts, numAccounts, keyboard);
+                doWithdraw(accounts, keyboard);
             } else if (choice == 4) {
-                applyInterestRate(accounts, numAccounts, keyboard);
-            } else {
+                applyInterestRate(accounts, keyboard);
+            }
+            else {
                 System.out.println("GoodBye!");
             }
 
             System.out.println();
         } while (choice != 5);
+    }
+
+    public void saveAccountNumbersToFile(){
+        try  (BufferedWriter writer = new BufferedWriter(new FileWriter("accountNumbers.txt",true))) {
+            for (Account account : accounts) {
+                if (account instanceof CheckingAccount) {
+                    writer.write("Checking," + account.getAccountNumber() + "\n");
+                } else if (account instanceof SavingsAccount) {
+                    writer.write("Savings," + account.getAccountNumber() +  "\n");
+                }
+            }
+            System.out.println("Account numbers saved successfully!");
+
+           
+        } catch (IOException e) {
+            System.out.println("Error writing to file: " + e.getMessage());
+        }
+
+    }
+
+    public void loadAccountNumbersFromFile(){
+
+        try (BufferedReader reader = new BufferedReader(new FileReader("accountNumbers.txt"))){
+            String line;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(","); 
+            String type = parts[0].trim();
+            long accountNumber = Long.parseLong(parts[1].trim());
+
+            if (type.equalsIgnoreCase("Checking")) {
+                accounts.add(new CheckingAccount(accountNumber));
+            } else if (type.equalsIgnoreCase("Savings")) {
+                accounts.add(new SavingsAccount(accountNumber, 0.03)); 
+            }
+            System.out.println("Loaded " + type + " Account: " + accountNumber);
+        }
+                
+            
+            
+        } catch (IOException e) {
+            System.out.println("Error writing to file: " + e.getMessage());
+        
+        }
     }
 
     public int accountMenu(Scanner keyboard) {
@@ -53,10 +103,10 @@ public class Bank {
 
     }
 
-    public int searchAccounts(Account accounts[], int count, long accountNumber) {
-    
-            for (int i = 0; i < count; i++) {
-                if (accounts[i].getAccountNumber() == accountNumber) {
+    public int searchAccounts(ArrayList<Account> accounts,  long accountNumber) {
+        
+                for (int i = 0; i < accounts.size(); i++) {
+                    if (accounts.get(i).getAccountNumber() == accountNumber) {
                 return i;
             }
 
@@ -65,18 +115,18 @@ public class Bank {
 
     }
 
-    public void doDeposit(Account accounts[], int count, Scanner keyboard) {
-        System.out.println("\nPlease enter account number");
-
-        long accountNumber = keyboard.nextLong();
-
-        int index = searchAccounts(accounts, count, accountNumber);
-        if (index >= 0) {
-
-            System.out.println("Please enter deposit amount");
-            double amount = keyboard.nextDouble();
-
-            accounts[index].deposit(amount);
+    public void doDeposit(ArrayList<Account> accounts, Scanner keyboard) {
+            System.out.println("\nPlease enter account number");
+    
+            long accountNumber = keyboard.nextLong();
+    
+            int index = searchAccounts(accounts, accountNumber);
+            if (index >= 0) {
+    
+                System.out.println("Please enter deposit amount");
+                double amount = keyboard.nextDouble();
+    
+                accounts.get(index).deposit(amount,accountNumber);
 
         } else {
             System.out.println("No account exist with AccountNumber: " + accountNumber);
@@ -84,18 +134,18 @@ public class Bank {
 
     }
 
-    public void doWithdraw(Account accounts[], int count, Scanner keyboard) {
+    public void doWithdraw(ArrayList<Account> accounts, Scanner keyboard) {
         System.out.println("\nPlease enter account number");
 
         long accountNumber = keyboard.nextLong();
 
-        int index = searchAccounts(accounts, count, accountNumber);
+        int index = searchAccounts(accounts, accountNumber);
         if (index >= 0) {
 
             System.out.println("Please enter withdraw amount");
             double amount = keyboard.nextDouble();
 
-            accounts[index].withdraw(amount);
+            accounts.get(index).withdraw(amount);
 
         } else {
             System.out.println("No account exist with AccountNumber: " + accountNumber);
@@ -103,15 +153,15 @@ public class Bank {
 
     }
 
-    public void applyInterestRate(Account accounts[], int count, Scanner keyboard) {
+    public void applyInterestRate(ArrayList<Account> accounts, Scanner keyboard) {
         System.out.println("\nPlease enter account number");
 
         long accountNumber = keyboard.nextLong();
 
-        int index = searchAccounts(accounts, count, accountNumber);
+        int index = searchAccounts(accounts, accountNumber);
         if (index >= 0) {
-
-            ((SavingsAccount) accounts[index]).applyInterestRate();
+           if(accounts.get(index) instanceof SavingsAccount){
+            ((SavingsAccount) accounts.get(index)).applyInterestRate(accountNumber);}
 
         } else {
             System.out.println("No account exist with AccountNumber: " + accountNumber);
@@ -131,13 +181,17 @@ public class Bank {
 
         if (choice == 1) {
             System.out.println("Enter Transaction Fee: ");
-            double fee = keyboard.nextDouble();
-            account = new CheckingAccount(accountNumber, fee);
+            account = new CheckingAccount(accountNumber);
         } else {
             System.out.println("Please Enter Interest Rate: ");
             double interestRate = keyboard.nextDouble();
             account = new SavingsAccount(accountNumber, interestRate);
         }
+
+
+            accounts.add(account); 
+            saveAccountNumbersToFile();
+            System.out.println("Account created and saved successfully!");
         return account;
 
     }
@@ -162,7 +216,6 @@ public class Bank {
         return choice;
 
     }
-
 
 
 }

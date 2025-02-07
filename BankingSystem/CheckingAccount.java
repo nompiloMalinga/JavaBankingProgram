@@ -3,23 +3,29 @@ package BankingSystem;
 
 public class CheckingAccount extends Account {
 
-    private static double FEE =2.5;
+    private static double FEE = 2.5;
+
 
     public CheckingAccount(){
         super();
     }
 
-    public CheckingAccount(long accountNumber,double fee){
+    public CheckingAccount(long accountNumber){
         super(accountNumber);
-        FEE=fee;
+    
+    }
+
+    
+    public static void setFEE(double fEE) {
+        FEE = fEE;
     }
 
     @Override
-    public void deposit(double amount) {
+    public void deposit(double amount,long accountNumber) {
 
         if(amount > 0){
             balance+= amount;
-            System.out.printf("Amount %.2f deposited%n",amount);
+            System.out.printf("Amount %.2f deposited into ccount %d%n", amount, accountNumber);
            
 
             balance-=FEE;

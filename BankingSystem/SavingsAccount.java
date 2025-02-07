@@ -28,14 +28,14 @@ public class SavingsAccount extends Account {
         return balance*(interestRate/100);
     }
 
-    public void applyInterestRate(){
+    public void applyInterestRate(long accountNumber){
         double interest = calcInterest();
         System.out.printf("Interest amount  %.2f added to your balance%n",interest);
-        deposit(interest);;
+        deposit(interest,accountNumber);;
     }
 
     @Override
-    public void deposit(double amount) {
+    public void deposit(double amount,long accountNumber) {
 
         if(amount > 0){
             balance += amount;
